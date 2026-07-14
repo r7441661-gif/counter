@@ -91,7 +91,7 @@
     .counter-wrap {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     .counter-value {
       font-size: 1.3rem;
@@ -103,11 +103,11 @@
     .btn-click {
       background: #f8fafc;
       border: none;
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 40px;
-      font-size: 1.6rem;
-      font-weight: 300;
+      font-size: 1.3rem;
+      font-weight: 400;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -121,20 +121,28 @@
       transform: scale(0.92);
       background: #e2e8f0;
     }
+    .btn-click.minus {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    .btn-click.minus:active {
+      background: #fecaca;
+    }
     .card-1 .color-dot { background: #f9b4c2; border-color: #b8d4e3; }
-    .card-1 .btn-click { background: #fce4ec; color: #b3415c; border: 2px solid #b8d4e3; }
+    .card-1 .btn-click.plus { background: #fce4ec; color: #b3415c; border: 2px solid #b8d4e3; }
 
     .card-2 .color-dot { background: #f9b4c2; border-color: #ffffff; }
-    .card-2 .btn-click { background: #fce4ec; color: #b3415c; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0e0e0; }
+    .card-2 .btn-click.plus { background: #fce4ec; color: #b3415c; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0e0e0; }
 
     .card-3 .color-dot { background: #5b9bd5; border-color: #ffffff; }
-    .card-3 .btn-click { background: #d4e3f7; color: #1f5b8a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #c0d0e0; }
+    .card-3 .btn-click.plus { background: #d4e3f7; color: #1f5b8a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #c0d0e0; }
 
     .card-4 .color-dot { background: #f8b07c; border-color: #ffffff; }
-    .card-4 .btn-click { background: #fde8d4; color: #b45f2a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0d0c0; }
+    .card-4 .btn-click.plus { background: #fde8d4; color: #b45f2a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0d0c0; }
 
     .card-5 .color-dot { background: #d4c9a8; border-color: #8caa7a; }
-    .card-5 .btn-click { background: #ede7d5; color: #5f6d4a; border: 2px solid #8caa7a; }
+    .card-5 .btn-click.plus { background: #ede7d5; color: #5f6d4a; border: 2px solid #8caa7a; }
 
     .reset-area {
       display: flex;
@@ -166,7 +174,7 @@
       .total-number { font-size: 3.6rem; }
       .card { padding: 8px 12px 8px 16px; }
       .btn-name { font-size: 0.9rem; }
-      .btn-click { width: 40px; height: 40px; font-size: 1.4rem; }
+      .btn-click { width: 36px; height: 36px; font-size: 1.1rem; }
       .counter-value { font-size: 1.2rem; min-width: 1.8rem; }
     }
     @media (max-width: 380px) {
@@ -254,19 +262,33 @@
         counterVal.id = `counter-${btn.key}`;
         counterVal.textContent = '0';
 
-        const clickBtn = document.createElement('button');
-        clickBtn.className = 'btn-click';
-        clickBtn.textContent = '+';
-        clickBtn.dataset.key = btn.key;
+        // Кнопка "−"
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'btn-click minus';
+        minusBtn.textContent = '−';
+        minusBtn.dataset.key = btn.key;
 
+        // Кнопка "+"
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'btn-click plus';
+        plusBtn.textContent = '+';
+        plusBtn.dataset.key = btn.key;
+
+        counterWrap.appendChild(minusBtn);
         counterWrap.appendChild(counterVal);
-        counterWrap.appendChild(clickBtn);
+        counterWrap.appendChild(plusBtn);
 
         card.appendChild(left);
         card.appendChild(counterWrap);
         cardsContainer.appendChild(card);
 
-        clickBtn.addEventListener('click', function(e) {
+        minusBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const key = this.dataset.key;
+          handleDecrement(key);
+        });
+
+        plusBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           const key = this.dataset.key;
           handleIncrement(key);
@@ -321,6 +343,33 @@
       });
     }
 
+    function handleDecrement(key) {
+      // Не даём уйти в минус
+      if (currentValues[key] <= 0) return;
+
+      const updateData = {};
+      updateData[key] = firebase.firestore.FieldValue.increment(-1);
+      updateData['total'] = firebase.firestore.FieldValue.increment(-1);
+
+      docRef.update(updateData).catch((error) => {
+        if (error.code === 'not-found') {
+          const initData = {
+            total: 0,
+            pinkBlue: 0,
+            pinkWhite: 0,
+            blueWhite: 0,
+            orangeWhite: 0,
+            beigeGreen: 0
+          };
+          docRef.set(initData).then(() => {
+            docRef.update(updateData).catch(console.warn);
+          }).catch(console.warn);
+        } else {
+          console.warn('Ошибка обновления:', error);
+        }
+      });
+    }
+
     function ensureDocument() {
       docRef.get().then((docSnap) => {
         if (!docSnap.exists) {
@@ -338,6 +387,7 @@
     }
 
     function handleReset() {
+      // Сброс без PIN
       const resetData = {
         total: firebase.firestore.FieldValue.increment(-currentValues.total),
         pinkBlue: firebase.firestore.FieldValue.increment(-currentValues.pinkBlue),
