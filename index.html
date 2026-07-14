@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Счётчики · синхронизация</title>
-  <!-- Firebase compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
@@ -29,7 +28,6 @@
       border-radius: 40px;
       padding: 24px 20px 32px;
       box-shadow: 0 20px 40px rgba(0, 10, 30, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
-      transition: box-shadow 0.2s;
     }
     .total-block {
       background: #f0f4fe;
@@ -70,7 +68,6 @@
       justify-content: space-between;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.04);
       border: 1px solid rgba(0,0,0,0.02);
-      transition: all 0.1s ease;
     }
     .card-left {
       display: flex;
@@ -116,10 +113,9 @@
       justify-content: center;
       color: #1e293b;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-      transition: background 0.15s, transform 0.1s;
       background: #f1f5f9;
       border: 1px solid rgba(0,0,0,0.02);
+      transition: background 0.15s, transform 0.1s;
     }
     .btn-click:active {
       transform: scale(0.92);
@@ -208,15 +204,6 @@
 
     const COLLECTION = 'counters';
     const DOCUMENT = 'counterMain';
-
-    const FIELDS = {
-      total: 'total',
-      pinkBlue: 'pinkBlue',
-      pinkWhite: 'pinkWhite',
-      blueWhite: 'blueWhite',
-      orangeWhite: 'orangeWhite',
-      beigeGreen: 'beigeGreen'
-    };
 
     const BUTTONS = [
       { key: 'pinkBlue', label: 'Розово-голубой', cssClass: 'card-1' },
@@ -351,7 +338,6 @@
     }
 
     function handleReset() {
-      // Сброс без PIN: обнуляем все счётчики
       const resetData = {
         total: firebase.firestore.FieldValue.increment(-currentValues.total),
         pinkBlue: firebase.firestore.FieldValue.increment(-currentValues.pinkBlue),
