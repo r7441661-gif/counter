@@ -31,7 +31,6 @@
       box-shadow: 0 20px 40px rgba(0, 10, 30, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
       transition: box-shadow 0.2s;
     }
-    /* общий счётчик */
     .total-block {
       background: #f0f4fe;
       border-radius: 32px;
@@ -56,7 +55,6 @@
       color: #0f172a;
       letter-spacing: -0.5px;
     }
-    /* сетка карточек */
     .grid {
       display: flex;
       flex-direction: column;
@@ -127,7 +125,6 @@
       transform: scale(0.92);
       background: #e2e8f0;
     }
-    /* индивидуальные рамки и фон кнопок (цветные) */
     .card-1 .color-dot { background: #f9b4c2; border-color: #b8d4e3; }
     .card-1 .btn-click { background: #fce4ec; color: #b3415c; border: 2px solid #b8d4e3; }
 
@@ -143,7 +140,6 @@
     .card-5 .color-dot { background: #d4c9a8; border-color: #8caa7a; }
     .card-5 .btn-click { background: #ede7d5; color: #5f6d4a; border: 2px solid #8caa7a; }
 
-    /* кнопка сброса */
     .reset-area {
       display: flex;
       justify-content: center;
@@ -169,7 +165,6 @@
       transform: scale(0.96);
       background: #c53030;
     }
-    /* адаптив */
     @media (max-width: 480px) {
       .app { padding: 20px 16px 24px; }
       .total-number { font-size: 3.6rem; }
@@ -186,18 +181,13 @@
 </head>
 <body>
 <div class="app" id="app">
-  <!-- общий счётчик -->
   <div class="total-block">
     <div class="total-label">Общее количество нажатий</div>
     <div class="total-number" id="totalDisplay">0</div>
   </div>
 
-  <!-- карточки кнопок -->
-  <div class="grid" id="cardsContainer">
-    <!-- каждая карточка будет построена из JS, но чтобы сохранить порядок и имена, отрисуем через шаблон -->
-  </div>
+  <div class="grid" id="cardsContainer"></div>
 
-  <!-- кнопка сброса -->
   <div class="reset-area">
     <button class="btn-reset" id="resetButton">Сбросить всё</button>
   </div>
@@ -205,7 +195,6 @@
 
 <script>
   (function() {
-    // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyC2du1x0P6Nyx4SjvDu2eW-eJOGssNxO2Q",
       authDomain: "rostik-bb804.firebaseapp.com",
@@ -217,11 +206,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // коллекция / документ
     const COLLECTION = 'counters';
     const DOCUMENT = 'counterMain';
 
-    // имена полей (соответствуют структуре)
     const FIELDS = {
       total: 'total',
       pinkBlue: 'pinkBlue',
@@ -231,7 +218,6 @@
       beigeGreen: 'beigeGreen'
     };
 
-    // маппинг названий для отображения
     const BUTTONS = [
       { key: 'pinkBlue', label: 'Розово-голубой', cssClass: 'card-1' },
       { key: 'pinkWhite', label: 'Розово-белый', cssClass: 'card-2' },
@@ -240,14 +226,10 @@
       { key: 'beigeGreen', label: 'Бежево-зелёный', cssClass: 'card-5' }
     ];
 
-    // ссылка на документ
     const docRef = db.collection(COLLECTION).doc(DOCUMENT);
-
-    // DOM-элементы
     const totalDisplay = document.getElementById('totalDisplay');
     const cardsContainer = document.getElementById('cardsContainer');
 
-    // Хранилище для текущих значений (отображение)
     let currentValues = {
       total: 0,
       pinkBlue: 0,
@@ -257,10 +239,6 @@
       beigeGreen: 0
     };
 
-    // Флаг, чтобы не обновлять DOM из onSnapshot при локальных изменениях (но мы будем обновлять всегда)
-    // Для предотвращения race condition используем простое обновление
-
-    // --- Отрисовка карточек (один раз) ---
     function buildCards() {
       cardsContainer.innerHTML = '';
       BUTTONS.forEach(btn => {
@@ -301,7 +279,6 @@
         card.appendChild(counterWrap);
         cardsContainer.appendChild(card);
 
-        // обработчик клика на кнопку +
         clickBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           const key = this.dataset.key;
@@ -311,14 +288,11 @@
     }
     buildCards();
 
-    // --- Функция обновления UI из данных ---
     function updateUI(data) {
       if (!data) return;
-      // обновляем общий
       const total = data.total ?? 0;
       totalDisplay.textContent = total;
 
-      // обновляем каждый счётчик
       BUTTONS.forEach(btn => {
         const key = btn.key;
         const val = data[key] ?? 0;
@@ -326,7 +300,6 @@
         if (el) el.textContent = val;
       });
 
-      // сохраняем текущие значения (для сброса)
       currentValues = {
         total: data.total ?? 0,
         pinkBlue: data.pinkBlue ?? 0,
@@ -337,15 +310,12 @@
       };
     }
 
-    // --- Обработчик нажатия на кнопку (инкремент) ---
     function handleIncrement(key) {
-      // Используем FieldValue.increment(1) для атомарного обновления
       const updateData = {};
       updateData[key] = firebase.firestore.FieldValue.increment(1);
       updateData['total'] = firebase.firestore.FieldValue.increment(1);
 
       docRef.update(updateData).catch((error) => {
-        // Если документа нет — создаём с нулевыми значениями и повторяем операцию
         if (error.code === 'not-found') {
           const initData = {
             total: 0,
@@ -356,7 +326,6 @@
             beigeGreen: 0
           };
           docRef.set(initData).then(() => {
-            // после создания повторяем инкремент
             docRef.update(updateData).catch(console.warn);
           }).catch(console.warn);
         } else {
@@ -365,7 +334,6 @@
       });
     }
 
-    // --- Инициализация документа (если отсутствует) ---
     function ensureDocument() {
       docRef.get().then((docSnap) => {
         if (!docSnap.exists) {
@@ -382,51 +350,40 @@
       }).catch(console.warn);
     }
 
-    // --- Сброс (с PIN-кодом) ---
     function handleReset() {
-      const pin = prompt('Введите PIN:');
-      if (pin === '2026') {
-        // сбросить все счётчики в 0 через FieldValue
-        const resetData = {
-          total: firebase.firestore.FieldValue.increment(-currentValues.total),
-          pinkBlue: firebase.firestore.FieldValue.increment(-currentValues.pinkBlue),
-          pinkWhite: firebase.firestore.FieldValue.increment(-currentValues.pinkWhite),
-          blueWhite: firebase.firestore.FieldValue.increment(-currentValues.blueWhite),
-          orangeWhite: firebase.firestore.FieldValue.increment(-currentValues.orangeWhite),
-          beigeGreen: firebase.firestore.FieldValue.increment(-currentValues.beigeGreen)
-        };
-        docRef.update(resetData).catch((error) => {
-          if (error.code === 'not-found') {
-            // если документа нет — создаём с нулями
-            const init = {
-              total: 0,
-              pinkBlue: 0,
-              pinkWhite: 0,
-              blueWhite: 0,
-              orangeWhite: 0,
-              beigeGreen: 0
-            };
-            docRef.set(init).catch(console.warn);
-          } else {
-            console.warn('Ошибка сброса:', error);
-          }
-        });
-      } else {
-        // неверный PIN — ничего не делаем
-        // (можно тихо игнорировать)
-      }
+      // Сброс без PIN: обнуляем все счётчики
+      const resetData = {
+        total: firebase.firestore.FieldValue.increment(-currentValues.total),
+        pinkBlue: firebase.firestore.FieldValue.increment(-currentValues.pinkBlue),
+        pinkWhite: firebase.firestore.FieldValue.increment(-currentValues.pinkWhite),
+        blueWhite: firebase.firestore.FieldValue.increment(-currentValues.blueWhite),
+        orangeWhite: firebase.firestore.FieldValue.increment(-currentValues.orangeWhite),
+        beigeGreen: firebase.firestore.FieldValue.increment(-currentValues.beigeGreen)
+      };
+      docRef.update(resetData).catch((error) => {
+        if (error.code === 'not-found') {
+          const init = {
+            total: 0,
+            pinkBlue: 0,
+            pinkWhite: 0,
+            blueWhite: 0,
+            orangeWhite: 0,
+            beigeGreen: 0
+          };
+          docRef.set(init).catch(console.warn);
+        } else {
+          console.warn('Ошибка сброса:', error);
+        }
+      });
     }
 
-    // --- Подписка на изменения (onSnapshot) ---
     function subscribe() {
       docRef.onSnapshot((docSnap) => {
         if (docSnap.exists) {
           const data = docSnap.data();
           updateUI(data);
         } else {
-          // документа нет — создаём и подписываемся дальше
           ensureDocument();
-          // данные пока нулевые
           const empty = {
             total: 0,
             pinkBlue: 0,
@@ -439,23 +396,16 @@
         }
       }, (error) => {
         console.warn('onSnapshot error:', error);
-        // при ошибке пробуем переподписаться? но оставим как есть
       });
     }
 
-    // --- Инициализация ---
     function init() {
       ensureDocument();
       subscribe();
-
-      // кнопка сброса
       document.getElementById('resetButton').addEventListener('click', handleReset);
     }
 
     init();
-
-    // Дополнительно: обработка для случая, если документ создан позже — onSnapshot отработает
-    // также поле total обновляется через FieldValue.increment, всё атомарно.
   })();
 </script>
 </body>
