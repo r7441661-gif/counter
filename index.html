@@ -1,617 +1,462 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Счётчик · Canvas + Firestore</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-        body {
-            min-height: 100vh;
-            background: linear-gradient(145deg, #0b1120 0%, #1a253b 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-        .app-card {
-            max-width: 700px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 56px;
-            padding: 28px 22px 34px;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-        }
-        h1 {
-            color: #eef5ff;
-            font-weight: 500;
-            font-size: 1.6rem;
-            letter-spacing: -0.5px;
-            text-align: center;
-            margin-bottom: 18px;
-            text-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        h1 span {
-            background: rgba(255, 215, 0, 0.15);
-            padding: 0 14px;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 400;
-            color: #ffd966;
-        }
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding: 0 6px;
-        }
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #b6caf0;
-            background: rgba(0,0,0,0.3);
-            padding: 6px 16px 6px 12px;
-            border-radius: 60px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.04);
-        }
-        .connection-status .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 12px;
-            display: inline-block;
-            transition: all 0.3s;
-        }
-        .dot.online { background: #2ecc71; box-shadow: 0 0 16px #2ecc7180; }
-        .dot.offline { background: #e74c3c; box-shadow: 0 0 16px #e74c3c80; animation: pulse 1.2s infinite; }
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.85); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .badge-online {
-            background: #27ae60;
-            color: white;
-            padding: 5px 16px;
-            border-radius: 60px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            letter-spacing: 0.4px;
-            box-shadow: 0 0 12px #27ae6040;
-            white-space: nowrap;
-        }
-        .canvas-wrapper {
-            background: #0a111f;
-            border-radius: 40px;
-            padding: 12px;
-            box-shadow: inset 0 6px 12px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.5);
-            margin-bottom: 24px;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 1 / 1;
-            background: #0f182a;
-            border-radius: 32px;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
-            touch-action: none;
-        }
-        .counter-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 0 8px 18px 8px;
-            color: #b6caf0;
-            font-weight: 400;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .counter-status strong {
-            font-size: 1.9rem;
-            font-weight: 600;
-            color: #ffffff;
-            background: rgba(0, 20, 40, 0.5);
-            padding: 0 20px;
-            border-radius: 60px;
-            line-height: 1.4;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin: 20px 0 16px;
-        }
-        .btn {
-            border: none;
-            border-radius: 60px;
-            padding: 14px 0;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #fff;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.4);
-            transition: all 0.06s ease;
-            cursor: pointer;
-            touch-action: manipulation;
-            text-align: center;
-            line-height: 1.2;
-            border: 2px solid rgba(255,255,255,0.3);
-            letter-spacing: 0.3px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 60px;
-        }
-        .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
-        }
-        .btn .count {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-top: 2px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .btn .label {
-            font-size: 0.7rem;
-            opacity: 0.9;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        /* Цвета кнопок */
-        .btn-pink-blue { background: linear-gradient(135deg, #f472b6, #60a5fa); border-color: #f9a8d4; }
-        .btn-pink-white { background: linear-gradient(135deg, #f472b6, #fde68a); border-color: #fbcfe8; }
-        .btn-blue-white { background: linear-gradient(135deg, #60a5fa, #93c5fd); border-color: #bfdbfe; }
-        .btn-orange-white { background: linear-gradient(135deg, #fb923c, #fcd34d); border-color: #fdba74; }
-        .btn-beige-green { background: linear-gradient(135deg, #a3a380, #6b9e6b); border-color: #c5c5a0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Счётчики · синхронизация</title>
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f4f6fa;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .app {
+      max-width: 500px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 40px;
+      padding: 24px 20px 32px;
+      box-shadow: 0 20px 40px rgba(0, 10, 30, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+      transition: box-shadow 0.2s;
+    }
+    /* общий счётчик */
+    .total-block {
+      background: #f0f4fe;
+      border-radius: 32px;
+      padding: 20px 16px 18px;
+      margin-bottom: 28px;
+      text-align: center;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.02), 0 6px 12px rgba(0, 20, 50, 0.04);
+    }
+    .total-label {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: #1e293b;
+      opacity: 0.7;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .total-number {
+      font-size: 4.2rem;
+      font-weight: 600;
+      line-height: 1.1;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    /* сетка карточек */
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 10px 16px 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0,0,0,0.02);
+      transition: all 0.1s ease;
+    }
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+    .color-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      border: 2px solid rgba(0,0,0,0.06);
+    }
+    .btn-name {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1e293b;
+      letter-spacing: -0.2px;
+    }
+    .counter-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .counter-value {
+      font-size: 1.3rem;
+      font-weight: 600;
+      min-width: 2.2rem;
+      text-align: center;
+      color: #0f172a;
+    }
+    .btn-click {
+      background: #f8fafc;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 40px;
+      font-size: 1.6rem;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1e293b;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      transition: background 0.15s, transform 0.1s;
+      background: #f1f5f9;
+      border: 1px solid rgba(0,0,0,0.02);
+    }
+    .btn-click:active {
+      transform: scale(0.92);
+      background: #e2e8f0;
+    }
+    /* индивидуальные рамки и фон кнопок (цветные) */
+    .card-1 .color-dot { background: #f9b4c2; border-color: #b8d4e3; }
+    .card-1 .btn-click { background: #fce4ec; color: #b3415c; border: 2px solid #b8d4e3; }
 
-        .total-block {
-            background: rgba(0,0,0,0.3);
-            border-radius: 60px;
-            padding: 14px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 14px 0 18px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.06);
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .total-block span {
-            color: #b6caf0;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-        .total-block strong {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #ffd966;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-        }
-        .reset-area {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            margin-top: 8px;
-            background: rgba(0,0,0,0.25);
-            padding: 14px 18px;
-            border-radius: 80px;
-            backdrop-filter: blur(4px);
-        }
-        .reset-area input {
-            background: #0e1a2b;
-            border: 1px solid #38507a;
-            border-radius: 60px;
-            padding: 12px 20px;
-            width: 150px;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            text-align: center;
-            letter-spacing: 2px;
-            font-weight: 500;
-        }
-        .reset-area input::placeholder {
-            color: #5f74a0;
-            font-weight: 300;
-            letter-spacing: 0px;
-        }
-        .reset-area input:focus {
-            border-color: #7fa0e0;
-            box-shadow: 0 0 0 2px #3f6bb0;
-        }
-        .btn-reset-pin {
-            background: #b34141;
-            border: none;
-            border-radius: 60px;
-            padding: 12px 28px;
-            font-weight: 600;
-            color: white;
-            box-shadow: 0 6px 0 #631f1f;
-            transition: 0.06s linear;
-            cursor: pointer;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-            border: 1px solid #ff8a8a40;
-        }
-        .btn-reset-pin:active {
-            transform: translateY(5px);
-            box-shadow: 0 1px 0 #631f1f;
-        }
-        .btn-reset-all {
-            background: #7f3f8f;
-            border: none;
-            border-radius: 60px;
-            padding: 12px 28px;
-            font-weight: 600;
-            color: white;
-            box-shadow: 0 6px 0 #4a1f55;
-            transition: 0.06s linear;
-            cursor: pointer;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-            border: 1px solid #c084d8;
-        }
-        .btn-reset-all:active {
-            transform: translateY(5px);
-            box-shadow: 0 1px 0 #4a1f55;
-        }
-        .footer-sync {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin-top: 16px;
-            font-size: 0.8rem;
-            color: #6d84b0;
-        }
-        .footer-sync .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 10px;
-            background: #2ecc71;
-            display: inline-block;
-            box-shadow: 0 0 12px #2ecc7180;
-        }
-        @media (max-width: 600px) {
-            .app-card { padding: 18px 14px 26px; }
-            .button-grid { gap: 6px; }
-            .btn { font-size: 0.7rem; padding: 10px 0; min-height: 50px; }
-            .btn .count { font-size: 1.1rem; }
-            .btn .label { font-size: 0.6rem; }
-            .total-block strong { font-size: 1.6rem; }
-            .reset-area { flex-direction: column; gap: 10px; }
-            .reset-area input { width: 100%; max-width: 200px; }
-            .status-bar { flex-direction: column; gap: 8px; align-items: stretch; }
-            .connection-status { justify-content: center; }
-        }
-    </style>
+    .card-2 .color-dot { background: #f9b4c2; border-color: #ffffff; }
+    .card-2 .btn-click { background: #fce4ec; color: #b3415c; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0e0e0; }
+
+    .card-3 .color-dot { background: #5b9bd5; border-color: #ffffff; }
+    .card-3 .btn-click { background: #d4e3f7; color: #1f5b8a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #c0d0e0; }
+
+    .card-4 .color-dot { background: #f8b07c; border-color: #ffffff; }
+    .card-4 .btn-click { background: #fde8d4; color: #b45f2a; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #e0d0c0; }
+
+    .card-5 .color-dot { background: #d4c9a8; border-color: #8caa7a; }
+    .card-5 .btn-click { background: #ede7d5; color: #5f6d4a; border: 2px solid #8caa7a; }
+
+    /* кнопка сброса */
+    .reset-area {
+      display: flex;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .btn-reset {
+      background: #e53e3e;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 60px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      letter-spacing: 0.3px;
+      box-shadow: 0 6px 14px rgba(229, 62, 62, 0.25);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      width: 100%;
+      max-width: 220px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-reset:active {
+      transform: scale(0.96);
+      background: #c53030;
+    }
+    /* адаптив */
+    @media (max-width: 480px) {
+      .app { padding: 20px 16px 24px; }
+      .total-number { font-size: 3.6rem; }
+      .card { padding: 8px 12px 8px 16px; }
+      .btn-name { font-size: 0.9rem; }
+      .btn-click { width: 40px; height: 40px; font-size: 1.4rem; }
+      .counter-value { font-size: 1.2rem; min-width: 1.8rem; }
+    }
+    @media (max-width: 380px) {
+      .card { flex-wrap: wrap; gap: 4px; }
+      .counter-wrap { margin-left: auto; }
+    }
+  </style>
 </head>
 <body>
-<div class="app-card">
-    <h1>🎯 Счётчик <span>Canvas</span></h1>
+<div class="app" id="app">
+  <!-- общий счётчик -->
+  <div class="total-block">
+    <div class="total-label">Общее количество нажатий</div>
+    <div class="total-number" id="totalDisplay">0</div>
+  </div>
 
-    <div class="status-bar">
-        <div class="connection-status" id="connectionStatus">
-            <span class="dot online" id="statusDot"></span>
-            <span id="statusText">Онлайн</span>
-        </div>
-        <span class="badge-online">🟢 live</span>
-    </div>
+  <!-- карточки кнопок -->
+  <div class="grid" id="cardsContainer">
+    <!-- каждая карточка будет построена из JS, но чтобы сохранить порядок и имена, отрисуем через шаблон -->
+  </div>
 
-    <div class="canvas-wrapper">
-        <canvas id="counterCanvas" width="400" height="400"></canvas>
-    </div>
-
-    <div class="counter-status">
-        <span>📊 Общее значение</span>
-        <strong id="counterDisplay">0</strong>
-    </div>
-
-    <!-- 5 кнопок -->
-    <div class="button-grid">
-        <button class="btn btn-pink-blue" data-index="0">
-            <span class="label">Розово-голубой</span>
-            <span class="count" id="count0">0</span>
-        </button>
-        <button class="btn btn-pink-white" data-index="1">
-            <span class="label">Розово-белый</span>
-            <span class="count" id="count1">0</span>
-        </button>
-        <button class="btn btn-blue-white" data-index="2">
-            <span class="label">Сине-белый</span>
-            <span class="count" id="count2">0</span>
-        </button>
-        <button class="btn btn-orange-white" data-index="3">
-            <span class="label">Оранжево-белый</span>
-            <span class="count" id="count3">0</span>
-        </button>
-        <button class="btn btn-beige-green" data-index="4">
-            <span class="label">Бежево-зеленый</span>
-            <span class="count" id="count4">0</span>
-        </button>
-    </div>
-
-    <!-- Общее количество -->
-    <div class="total-block">
-        <span>📦 Общее количество нажатий</span>
-        <strong id="totalCount">0</strong>
-    </div>
-
-    <div class="reset-area">
-        <input type="password" id="pinInput" placeholder="PIN" maxlength="6" inputmode="numeric">
-        <button class="btn-reset-pin" id="resetHardBtn">🔐 Сброс (PIN)</button>
-        <button class="btn-reset-all" id="resetAllBtn">🔄 Сбросить всё</button>
-    </div>
-    <div class="footer-sync">
-        <span class="dot"></span> синхронизация Firestore · onSnapshot
-    </div>
+  <!-- кнопка сброса -->
+  <div class="reset-area">
+    <button class="btn-reset" id="resetButton">Сбросить всё</button>
+  </div>
 </div>
+
 <script>
-    (function() {
-        // ---------- FIREBASE ----------
-        const firebaseConfig = {
-            apiKey: "AIzaSyC2du1x0P6Nyx4SjvDu2eW-eJOGssNxO2Q",
-            authDomain: "rostik-bb804.firebaseapp.com",
-            projectId: "rostik-bb804",
-            storageBucket: "rostik-bb804.firebasestorage.app",
-            messagingSenderId: "407814171203",
-            appId: "1:407814171203:web:98ddabe482615f843e42f6"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  (function() {
+    // --- Firebase ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyC2du1x0P6Nyx4SjvDu2eW-eJOGssNxO2Q",
+      authDomain: "rostik-bb804.firebaseapp.com",
+      projectId: "rostik-bb804",
+      storageBucket: "rostik-bb804.firebasestorage.app",
+      messagingSenderId: "407814171203",
+      appId: "1:407814171203:web:98ddabe482615f843e42f6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        const COUNTER_DOC = 'counters/counterMain';
+    // коллекция / документ
+    const COLLECTION = 'counters';
+    const DOCUMENT = 'counterMain';
 
-        // ---------- CANVAS ----------
-        const canvas = document.getElementById('counterCanvas');
-        const ctx = canvas.getContext('2d');
-        const displayEl = document.getElementById('counterDisplay');
-        const totalEl = document.getElementById('totalCount');
+    // имена полей (соответствуют структуре)
+    const FIELDS = {
+      total: 'total',
+      pinkBlue: 'pinkBlue',
+      pinkWhite: 'pinkWhite',
+      blueWhite: 'blueWhite',
+      orangeWhite: 'orangeWhite',
+      beigeGreen: 'beigeGreen'
+    };
 
-        // ---------- СОСТОЯНИЕ ----------
-        let counts = [0, 0, 0, 0, 0];
-        let total = 0;
+    // маппинг названий для отображения
+    const BUTTONS = [
+      { key: 'pinkBlue', label: 'Розово-голубой', cssClass: 'card-1' },
+      { key: 'pinkWhite', label: 'Розово-белый', cssClass: 'card-2' },
+      { key: 'blueWhite', label: 'Сине-белый', cssClass: 'card-3' },
+      { key: 'orangeWhite', label: 'Оранжево-белый', cssClass: 'card-4' },
+      { key: 'beigeGreen', label: 'Бежево-зелёный', cssClass: 'card-5' }
+    ];
 
-        // ---------- СТАТУС СОЕДИНЕНИЯ ----------
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
+    // ссылка на документ
+    const docRef = db.collection(COLLECTION).doc(DOCUMENT);
 
-        function updateConnectionStatus(isOnline) {
-            if (isOnline) {
-                statusDot.className = 'dot online';
-                statusText.textContent = 'Онлайн';
-            } else {
-                statusDot.className = 'dot offline';
-                statusText.textContent = 'Нет подключения';
-            }
-        }
-        window.addEventListener('online', () => updateConnectionStatus(true));
-        window.addEventListener('offline', () => updateConnectionStatus(false));
-        updateConnectionStatus(navigator.onLine);
+    // DOM-элементы
+    const totalDisplay = document.getElementById('totalDisplay');
+    const cardsContainer = document.getElementById('cardsContainer');
 
-        // ---------- ОТРИСОВКА CANVAS ----------
-        function drawCanvas(value) {
-            const w = canvas.width;
-            const h = canvas.height;
-            ctx.clearRect(0, 0, w, h);
+    // Хранилище для текущих значений (отображение)
+    let currentValues = {
+      total: 0,
+      pinkBlue: 0,
+      pinkWhite: 0,
+      blueWhite: 0,
+      orangeWhite: 0,
+      beigeGreen: 0
+    };
 
-            const grad = ctx.createRadialGradient(w*0.5, h*0.5, 20, w*0.5, h*0.5, w*0.7);
-            grad.addColorStop(0, '#223a5e');
-            grad.addColorStop(1, '#0f182a');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, h);
+    // Флаг, чтобы не обновлять DOM из onSnapshot при локальных изменениях (но мы будем обновлять всегда)
+    // Для предотвращения race condition используем простое обновление
 
-            ctx.strokeStyle = '#3a5a8a30';
-            ctx.lineWidth = 1.5;
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2;
-                const r1 = w * 0.3;
-                const r2 = w * 0.44;
-                const x1 = w/2 + Math.cos(angle) * r1;
-                const y1 = h/2 + Math.sin(angle) * r1;
-                const x2 = w/2 + Math.cos(angle) * r2;
-                const y2 = h/2 + Math.sin(angle) * r2;
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.stroke();
-            }
+    // --- Отрисовка карточек (один раз) ---
+    function buildCards() {
+      cardsContainer.innerHTML = '';
+      BUTTONS.forEach(btn => {
+        const card = document.createElement('div');
+        card.className = `card ${btn.cssClass}`;
+        card.dataset.key = btn.key;
 
-            ctx.beginPath();
-            ctx.arc(w/2, h/2, w*0.28, 0, Math.PI*2);
-            ctx.fillStyle = '#101c30';
-            ctx.shadowColor = '#7aa0e060';
-            ctx.shadowBlur = 32;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#6c93d040';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+        const left = document.createElement('div');
+        left.className = 'card-left';
 
-            const number = Number(value);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#00000080';
-            ctx.shadowBlur = 16;
+        const dot = document.createElement('span');
+        dot.className = 'color-dot';
 
-            ctx.font = `600 ${w * 0.22}px "Segoe UI", system-ui, sans-serif`;
-            ctx.fillStyle = '#ecf5ff';
-            ctx.fillText(number, w/2, h/2 - 6);
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'btn-name';
+        nameSpan.textContent = btn.label;
 
-            ctx.shadowBlur = 0;
-            ctx.font = `600 ${w * 0.22}px "Segoe UI", system-ui, sans-serif`;
-            ctx.fillStyle = '#b0ccff20';
-            ctx.fillText(number, w/2 + 2, h/2 - 4);
+        left.appendChild(dot);
+        left.appendChild(nameSpan);
 
-            ctx.font = `400 ${w * 0.045}px monospace`;
-            ctx.fillStyle = '#8aa9dd';
-            ctx.fillText('● live', w/2, h - 30);
-        }
+        const counterWrap = document.createElement('div');
+        counterWrap.className = 'counter-wrap';
 
-        // ---------- ОБНОВЛЕНИЕ UI ----------
-        function updateUI(data) {
-            if (data && Array.isArray(data.counts) && data.counts.length === 5) {
-                counts = data.counts.map(v => Number(v) || 0);
-            } else {
-                counts = [0, 0, 0, 0, 0];
-            }
-            total = counts.reduce((a, b) => a + b, 0);
+        const counterVal = document.createElement('span');
+        counterVal.className = 'counter-value';
+        counterVal.id = `counter-${btn.key}`;
+        counterVal.textContent = '0';
 
-            // Обновляем каждую кнопку
-            for (let i = 0; i < 5; i++) {
-                const el = document.getElementById('count' + i);
-                if (el) el.textContent = counts[i];
-            }
-            totalEl.textContent = total;
-            displayEl.textContent = total;
-            drawCanvas(total);
-        }
+        const clickBtn = document.createElement('button');
+        clickBtn.className = 'btn-click';
+        clickBtn.textContent = '+';
+        clickBtn.dataset.key = btn.key;
 
-        // ---------- FIRESTORE: ОБНОВЛЕНИЕ ИНДЕКСА ----------
-        function incrementIndex(index) {
-            if (index < 0 || index > 4) return;
-            if (!navigator.onLine) {
-                alert('⚠️ Нет подключения к интернету. Попробуйте позже.');
-                return;
-            }
-            const docRef = db.doc(COUNTER_DOC);
-            // Используем массив counts для атомарного обновления
-            docRef.update({
-                [`counts.${index}`]: firebase.firestore.FieldValue.increment(1)
-            }).catch((err) => {
-                if (err.code === 'not-found') {
-                    // Создаём документ с массивом
-                    const initCounts = [0, 0, 0, 0, 0];
-                    initCounts[index] = 1;
-                    docRef.set({ counts: initCounts }).catch(console.warn);
-                } else {
-                    console.warn('Ошибка increment:', err);
-                }
-            });
-        }
+        counterWrap.appendChild(counterVal);
+        counterWrap.appendChild(clickBtn);
 
-        // ---------- СБРОС ВСЕГО ----------
-        function resetAllCounters() {
-            if (!navigator.onLine) {
-                alert('⚠️ Нет подключения к интернету. Сброс невозможен.');
-                return;
-            }
-            const docRef = db.doc(COUNTER_DOC);
-            docRef.set({ counts: [0, 0, 0, 0, 0] })
-                .catch((err) => console.warn('Ошибка reset:', err));
-        }
+        card.appendChild(left);
+        card.appendChild(counterWrap);
+        cardsContainer.appendChild(card);
 
-        // ---------- ПОДПИСКА onSnapshot ----------
-        function startFirestoreListener() {
-            const docRef = db.doc(COUNTER_DOC);
-            docRef.onSnapshot({
-                includeMetadataChanges: false
-            }, (snapshot) => {
-                if (snapshot.exists) {
-                    const data = snapshot.data();
-                    if (data && Array.isArray(data.counts) && data.counts.length === 5) {
-                        updateUI(data);
-                    } else {
-                        // Неверный формат - инициализируем
-                        docRef.set({ counts: [0, 0, 0, 0, 0] })
-                            .then(() => updateUI({ counts: [0, 0, 0, 0, 0] }))
-                            .catch(console.warn);
-                    }
-                } else {
-                    docRef.set({ counts: [0, 0, 0, 0, 0] })
-                        .then(() => updateUI({ counts: [0, 0, 0, 0, 0] }))
-                        .catch(console.warn);
-                }
-            }, (error) => {
-                console.error('Ошибка onSnapshot:', error);
-            });
-        }
+        // обработчик клика на кнопку +
+        clickBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const key = this.dataset.key;
+          handleIncrement(key);
+        });
+      });
+    }
+    buildCards();
 
-        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
-        function init() {
-            const docRef = db.doc(COUNTER_DOC);
-            docRef.get()
-                .then((snap) => {
-                    if (snap.exists) {
-                        const data = snap.data();
-                        if (data && Array.isArray(data.counts) && data.counts.length === 5) {
-                            updateUI(data);
-                        } else {
-                            updateUI({ counts: [0, 0, 0, 0, 0] });
-                        }
-                    } else {
-                        updateUI({ counts: [0, 0, 0, 0, 0] });
-                    }
-                })
-                .catch(() => { updateUI({ counts: [0, 0, 0, 0, 0] }); });
+    // --- Функция обновления UI из данных ---
+    function updateUI(data) {
+      if (!data) return;
+      // обновляем общий
+      const total = data.total ?? 0;
+      totalDisplay.textContent = total;
 
-            startFirestoreListener();
+      // обновляем каждый счётчик
+      BUTTONS.forEach(btn => {
+        const key = btn.key;
+        const val = data[key] ?? 0;
+        const el = document.getElementById(`counter-${key}`);
+        if (el) el.textContent = val;
+      });
 
-            // ---------- КНОПКИ ----------
-            document.querySelectorAll('.btn[data-index]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const index = parseInt(btn.dataset.index, 10);
-                    if (!isNaN(index) && index >= 0 && index <= 4) {
-                        incrementIndex(index);
-                    }
-                });
-            });
+      // сохраняем текущие значения (для сброса)
+      currentValues = {
+        total: data.total ?? 0,
+        pinkBlue: data.pinkBlue ?? 0,
+        pinkWhite: data.pinkWhite ?? 0,
+        blueWhite: data.blueWhite ?? 0,
+        orangeWhite: data.orangeWhite ?? 0,
+        beigeGreen: data.beigeGreen ?? 0
+      };
+    }
 
-            // ---------- СБРОС ПО PIN ----------
-            const resetHardBtn = document.getElementById('resetHardBtn');
-            const pinInput = document.getElementById('pinInput');
-            resetHardBtn.addEventListener('click', () => {
-                const pin = pinInput.value.trim();
-                if (pin === '2026') {
-                    resetAllCounters();
-                    pinInput.value = '';
-                    pinInput.blur();
-                } else {
-                    alert('❌ Неверный PIN-код');
-                    pinInput.value = '';
-                    pinInput.focus();
-                }
-            });
+    // --- Обработчик нажатия на кнопку (инкремент) ---
+    function handleIncrement(key) {
+      // Используем FieldValue.increment(1) для атомарного обновления
+      const updateData = {};
+      updateData[key] = firebase.firestore.FieldValue.increment(1);
+      updateData['total'] = firebase.firestore.FieldValue.increment(1);
 
-            pinInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    resetHardBtn.click();
-                }
-            });
-
-            // ---------- КНОПКА "Сбросить всё" ----------
-            document.getElementById('resetAllBtn').addEventListener('click', () => {
-                if (confirm('Сбросить все счётчики?')) {
-                    resetAllCounters();
-                }
-            });
-        }
-
-        // ---------- ЗАПУСК ----------
-        if (typeof firebase !== 'undefined' && firebase.firestore) {
-            init();
+      docRef.update(updateData).catch((error) => {
+        // Если документа нет — создаём с нулевыми значениями и повторяем операцию
+        if (error.code === 'not-found') {
+          const initData = {
+            total: 0,
+            pinkBlue: 0,
+            pinkWhite: 0,
+            blueWhite: 0,
+            orangeWhite: 0,
+            beigeGreen: 0
+          };
+          docRef.set(initData).then(() => {
+            // после создания повторяем инкремент
+            docRef.update(updateData).catch(console.warn);
+          }).catch(console.warn);
         } else {
-            alert('Firebase не загружен. Проверьте подключение.');
+          console.warn('Ошибка обновления:', error);
         }
-    })();
+      });
+    }
+
+    // --- Инициализация документа (если отсутствует) ---
+    function ensureDocument() {
+      docRef.get().then((docSnap) => {
+        if (!docSnap.exists) {
+          const initData = {
+            total: 0,
+            pinkBlue: 0,
+            pinkWhite: 0,
+            blueWhite: 0,
+            orangeWhite: 0,
+            beigeGreen: 0
+          };
+          docRef.set(initData).catch(console.warn);
+        }
+      }).catch(console.warn);
+    }
+
+    // --- Сброс (с PIN-кодом) ---
+    function handleReset() {
+      const pin = prompt('Введите PIN:');
+      if (pin === '2026') {
+        // сбросить все счётчики в 0 через FieldValue
+        const resetData = {
+          total: firebase.firestore.FieldValue.increment(-currentValues.total),
+          pinkBlue: firebase.firestore.FieldValue.increment(-currentValues.pinkBlue),
+          pinkWhite: firebase.firestore.FieldValue.increment(-currentValues.pinkWhite),
+          blueWhite: firebase.firestore.FieldValue.increment(-currentValues.blueWhite),
+          orangeWhite: firebase.firestore.FieldValue.increment(-currentValues.orangeWhite),
+          beigeGreen: firebase.firestore.FieldValue.increment(-currentValues.beigeGreen)
+        };
+        docRef.update(resetData).catch((error) => {
+          if (error.code === 'not-found') {
+            // если документа нет — создаём с нулями
+            const init = {
+              total: 0,
+              pinkBlue: 0,
+              pinkWhite: 0,
+              blueWhite: 0,
+              orangeWhite: 0,
+              beigeGreen: 0
+            };
+            docRef.set(init).catch(console.warn);
+          } else {
+            console.warn('Ошибка сброса:', error);
+          }
+        });
+      } else {
+        // неверный PIN — ничего не делаем
+        // (можно тихо игнорировать)
+      }
+    }
+
+    // --- Подписка на изменения (onSnapshot) ---
+    function subscribe() {
+      docRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
+          const data = docSnap.data();
+          updateUI(data);
+        } else {
+          // документа нет — создаём и подписываемся дальше
+          ensureDocument();
+          // данные пока нулевые
+          const empty = {
+            total: 0,
+            pinkBlue: 0,
+            pinkWhite: 0,
+            blueWhite: 0,
+            orangeWhite: 0,
+            beigeGreen: 0
+          };
+          updateUI(empty);
+        }
+      }, (error) => {
+        console.warn('onSnapshot error:', error);
+        // при ошибке пробуем переподписаться? но оставим как есть
+      });
+    }
+
+    // --- Инициализация ---
+    function init() {
+      ensureDocument();
+      subscribe();
+
+      // кнопка сброса
+      document.getElementById('resetButton').addEventListener('click', handleReset);
+    }
+
+    init();
+
+    // Дополнительно: обработка для случая, если документ создан позже — onSnapshot отработает
+    // также поле total обновляется через FieldValue.increment, всё атомарно.
+  })();
 </script>
 </body>
 </html>
