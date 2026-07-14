@@ -17,7 +17,7 @@
             padding: 16px;
         }
         .app-card {
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
             background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(12px);
@@ -132,39 +132,77 @@
         }
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin: 22px 0 20px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0 16px;
         }
         .btn {
-            background: #1e2b44;
             border: none;
             border-radius: 60px;
-            padding: 16px 0;
-            font-size: 1.8rem;
+            padding: 14px 0;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #d6e5ff;
-            box-shadow: 0 8px 0 #0b111f, 0 8px 16px rgba(0,0,0,0.5);
+            color: #fff;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 6px 12px rgba(0,0,0,0.4);
             transition: all 0.06s ease;
             cursor: pointer;
             touch-action: manipulation;
             text-align: center;
-            line-height: 1;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            letter-spacing: 0.5px;
+            line-height: 1.2;
+            border: 2px solid rgba(255,255,255,0.3);
+            letter-spacing: 0.3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
         }
         .btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #0b111f;
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
         }
-        .btn-inc { background: #1f6d4a; color: #d4ffe6; }
-        .btn-inc:active { background: #17854f; }
-        .btn-dec { background: #8f3a3a; color: #ffd6d6; }
-        .btn-dec:active { background: #b13a3a; }
-        .btn-special { background: #3d3f6b; color: #d4d9ff; }
-        .btn-special:active { background: #5a5d9c; }
-        .btn-five { background: #2d4d6b; color: #cce4ff; }
-        .btn-five:active { background: #3f6b91; }
+        .btn .count {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .btn .label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        /* Цвета кнопок */
+        .btn-pink-blue { background: linear-gradient(135deg, #f472b6, #60a5fa); border-color: #f9a8d4; }
+        .btn-pink-white { background: linear-gradient(135deg, #f472b6, #fde68a); border-color: #fbcfe8; }
+        .btn-blue-white { background: linear-gradient(135deg, #60a5fa, #93c5fd); border-color: #bfdbfe; }
+        .btn-orange-white { background: linear-gradient(135deg, #fb923c, #fcd34d); border-color: #fdba74; }
+        .btn-beige-green { background: linear-gradient(135deg, #a3a380, #6b9e6b); border-color: #c5c5a0; }
+
+        .total-block {
+            background: rgba(0,0,0,0.3);
+            border-radius: 60px;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 14px 0 18px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.06);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .total-block span {
+            color: #b6caf0;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        .total-block strong {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffd966;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
         .reset-area {
             display: flex;
             flex-wrap: wrap;
@@ -217,6 +255,24 @@
             transform: translateY(5px);
             box-shadow: 0 1px 0 #631f1f;
         }
+        .btn-reset-all {
+            background: #7f3f8f;
+            border: none;
+            border-radius: 60px;
+            padding: 12px 28px;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 6px 0 #4a1f55;
+            transition: 0.06s linear;
+            cursor: pointer;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            border: 1px solid #c084d8;
+        }
+        .btn-reset-all:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #4a1f55;
+        }
         .footer-sync {
             display: flex;
             justify-content: center;
@@ -234,12 +290,15 @@
             display: inline-block;
             box-shadow: 0 0 12px #2ecc7180;
         }
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             .app-card { padding: 18px 14px 26px; }
-            .button-grid { gap: 8px; }
-            .btn { font-size: 1.6rem; padding: 14px 0; }
-            .reset-area { flex-direction: column; gap: 12px; }
-            .reset-area input { width: 100%; max-width: 220px; }
+            .button-grid { gap: 6px; }
+            .btn { font-size: 0.7rem; padding: 10px 0; min-height: 50px; }
+            .btn .count { font-size: 1.1rem; }
+            .btn .label { font-size: 0.6rem; }
+            .total-block strong { font-size: 1.6rem; }
+            .reset-area { flex-direction: column; gap: 10px; }
+            .reset-area input { width: 100%; max-width: 200px; }
             .status-bar { flex-direction: column; gap: 8px; align-items: stretch; }
             .connection-status { justify-content: center; }
         }
@@ -247,7 +306,7 @@
 </head>
 <body>
 <div class="app-card">
-    <h1>⚡ Счётчик <span>Canvas</span></h1>
+    <h1>🎯 Счётчик <span>Canvas</span></h1>
 
     <div class="status-bar">
         <div class="connection-status" id="connectionStatus">
@@ -266,16 +325,40 @@
         <strong id="counterDisplay">0</strong>
     </div>
 
+    <!-- 5 кнопок -->
     <div class="button-grid">
-        <button class="btn btn-inc" data-delta="1">+1</button>
-        <button class="btn btn-inc btn-five" data-delta="5">+5</button>
-        <button class="btn btn-dec" data-delta="-1">−1</button>
-        <button class="btn btn-dec btn-special" data-delta="-5">−5</button>
+        <button class="btn btn-pink-blue" data-index="0">
+            <span class="label">Розово-голубой</span>
+            <span class="count" id="count0">0</span>
+        </button>
+        <button class="btn btn-pink-white" data-index="1">
+            <span class="label">Розово-белый</span>
+            <span class="count" id="count1">0</span>
+        </button>
+        <button class="btn btn-blue-white" data-index="2">
+            <span class="label">Сине-белый</span>
+            <span class="count" id="count2">0</span>
+        </button>
+        <button class="btn btn-orange-white" data-index="3">
+            <span class="label">Оранжево-белый</span>
+            <span class="count" id="count3">0</span>
+        </button>
+        <button class="btn btn-beige-green" data-index="4">
+            <span class="label">Бежево-зеленый</span>
+            <span class="count" id="count4">0</span>
+        </button>
+    </div>
+
+    <!-- Общее количество -->
+    <div class="total-block">
+        <span>📦 Общее количество нажатий</span>
+        <strong id="totalCount">0</strong>
     </div>
 
     <div class="reset-area">
         <input type="password" id="pinInput" placeholder="PIN" maxlength="6" inputmode="numeric">
         <button class="btn-reset-pin" id="resetHardBtn">🔐 Сброс (PIN)</button>
+        <button class="btn-reset-all" id="resetAllBtn">🔄 Сбросить всё</button>
     </div>
     <div class="footer-sync">
         <span class="dot"></span> синхронизация Firestore · onSnapshot
@@ -301,8 +384,11 @@
         const canvas = document.getElementById('counterCanvas');
         const ctx = canvas.getContext('2d');
         const displayEl = document.getElementById('counterDisplay');
+        const totalEl = document.getElementById('totalCount');
 
-        let currentValue = 0;
+        // ---------- СОСТОЯНИЕ ----------
+        let counts = [0, 0, 0, 0, 0];
+        let total = 0;
 
         // ---------- СТАТУС СОЕДИНЕНИЯ ----------
         const statusDot = document.getElementById('statusDot');
@@ -317,14 +403,8 @@
                 statusText.textContent = 'Нет подключения';
             }
         }
-
-        window.addEventListener('online', () => {
-            updateConnectionStatus(true);
-        });
-        window.addEventListener('offline', () => {
-            updateConnectionStatus(false);
-        });
-        // Начальное состояние
+        window.addEventListener('online', () => updateConnectionStatus(true));
+        window.addEventListener('offline', () => updateConnectionStatus(false));
         updateConnectionStatus(navigator.onLine);
 
         // ---------- ОТРИСОВКА CANVAS ----------
@@ -387,41 +467,56 @@
         }
 
         // ---------- ОБНОВЛЕНИЕ UI ----------
-        function updateUI(value) {
-            const num = Number(value) || 0;
-            currentValue = num;
-            displayEl.textContent = num;
-            drawCanvas(num);
+        function updateUI(data) {
+            if (data && Array.isArray(data.counts) && data.counts.length === 5) {
+                counts = data.counts.map(v => Number(v) || 0);
+            } else {
+                counts = [0, 0, 0, 0, 0];
+            }
+            total = counts.reduce((a, b) => a + b, 0);
+
+            // Обновляем каждую кнопку
+            for (let i = 0; i < 5; i++) {
+                const el = document.getElementById('count' + i);
+                if (el) el.textContent = counts[i];
+            }
+            totalEl.textContent = total;
+            displayEl.textContent = total;
+            drawCanvas(total);
         }
 
-        // ---------- FIRESTORE: ИНКРЕМЕНТ ----------
-        function sendDelta(delta) {
-            if (delta === 0) return;
+        // ---------- FIRESTORE: ОБНОВЛЕНИЕ ИНДЕКСА ----------
+        function incrementIndex(index) {
+            if (index < 0 || index > 4) return;
             if (!navigator.onLine) {
                 alert('⚠️ Нет подключения к интернету. Попробуйте позже.');
                 return;
             }
             const docRef = db.doc(COUNTER_DOC);
+            // Используем массив counts для атомарного обновления
             docRef.update({
-                count: firebase.firestore.FieldValue.increment(delta)
+                [`counts.${index}`]: firebase.firestore.FieldValue.increment(1)
             }).catch((err) => {
                 if (err.code === 'not-found') {
-                    docRef.set({ count: delta }).catch(console.warn);
+                    // Создаём документ с массивом
+                    const initCounts = [0, 0, 0, 0, 0];
+                    initCounts[index] = 1;
+                    docRef.set({ counts: initCounts }).catch(console.warn);
                 } else {
                     console.warn('Ошибка increment:', err);
                 }
             });
         }
 
-        // ---------- СБРОС (установка значения) ----------
-        function resetCounterTo(value) {
+        // ---------- СБРОС ВСЕГО ----------
+        function resetAllCounters() {
             if (!navigator.onLine) {
                 alert('⚠️ Нет подключения к интернету. Сброс невозможен.');
                 return;
             }
             const docRef = db.doc(COUNTER_DOC);
-            docRef.set({ count: value })
-                .catch((err) => console.warn('Ошибка set (reset):', err));
+            docRef.set({ counts: [0, 0, 0, 0, 0] })
+                .catch((err) => console.warn('Ошибка reset:', err));
         }
 
         // ---------- ПОДПИСКА onSnapshot ----------
@@ -432,14 +527,17 @@
             }, (snapshot) => {
                 if (snapshot.exists) {
                     const data = snapshot.data();
-                    if (data && typeof data.count === 'number') {
-                        updateUI(data.count);
+                    if (data && Array.isArray(data.counts) && data.counts.length === 5) {
+                        updateUI(data);
                     } else {
-                        resetCounterTo(0);
+                        // Неверный формат - инициализируем
+                        docRef.set({ counts: [0, 0, 0, 0, 0] })
+                            .then(() => updateUI({ counts: [0, 0, 0, 0, 0] }))
+                            .catch(console.warn);
                     }
                 } else {
-                    docRef.set({ count: 0 })
-                        .then(() => { updateUI(0); })
+                    docRef.set({ counts: [0, 0, 0, 0, 0] })
+                        .then(() => updateUI({ counts: [0, 0, 0, 0, 0] }))
                         .catch(console.warn);
                 }
             }, (error) => {
@@ -453,23 +551,26 @@
             docRef.get()
                 .then((snap) => {
                     if (snap.exists) {
-                        const val = snap.data()?.count;
-                        if (typeof val === 'number') updateUI(val);
-                        else updateUI(0);
+                        const data = snap.data();
+                        if (data && Array.isArray(data.counts) && data.counts.length === 5) {
+                            updateUI(data);
+                        } else {
+                            updateUI({ counts: [0, 0, 0, 0, 0] });
+                        }
                     } else {
-                        updateUI(0);
+                        updateUI({ counts: [0, 0, 0, 0, 0] });
                     }
                 })
-                .catch(() => { updateUI(0); });
+                .catch(() => { updateUI({ counts: [0, 0, 0, 0, 0] }); });
 
             startFirestoreListener();
 
-            // ---------- КНОПКИ ИНКРЕМЕНТА ----------
-            document.querySelectorAll('.btn[data-delta]').forEach((btn) => {
+            // ---------- КНОПКИ ----------
+            document.querySelectorAll('.btn[data-index]').forEach((btn) => {
                 btn.addEventListener('click', () => {
-                    const delta = parseInt(btn.dataset.delta, 10);
-                    if (!isNaN(delta) && delta !== 0) {
-                        sendDelta(delta);
+                    const index = parseInt(btn.dataset.index, 10);
+                    if (!isNaN(index) && index >= 0 && index <= 4) {
+                        incrementIndex(index);
                     }
                 });
             });
@@ -480,7 +581,7 @@
             resetHardBtn.addEventListener('click', () => {
                 const pin = pinInput.value.trim();
                 if (pin === '2026') {
-                    resetCounterTo(0);
+                    resetAllCounters();
                     pinInput.value = '';
                     pinInput.blur();
                 } else {
@@ -493,6 +594,13 @@
             pinInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     resetHardBtn.click();
+                }
+            });
+
+            // ---------- КНОПКА "Сбросить всё" ----------
+            document.getElementById('resetAllBtn').addEventListener('click', () => {
+                if (confirm('Сбросить все счётчики?')) {
+                    resetAllCounters();
                 }
             });
         }
