@@ -1,247 +1,509 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Счётчик кликов</title>
-
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-
-body{
-    background:#f3f5f7;
-    padding:20px;
-    color:#222;
-}
-
-.container{
-    max-width:520px;
-    margin:auto;
-}
-
-.total{
-    background:#1f2937;
-    color:#fff;
-    border-radius:20px;
-    padding:24px;
-    text-align:center;
-    margin-bottom:24px;
-    box-shadow:0 10px 30px rgba(0,0,0,.15);
-}
-
-.total-title{
-    font-size:18px;
-    opacity:.85;
-    margin-bottom:8px;
-}
-
-.total-value{
-    font-size:48px;
-    font-weight:700;
-}
-
-.buttons{
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-}
-
-.counter-button{
-    width:100%;
-    border:3px solid;
-    border-radius:18px;
-    padding:18px 20px;
-    font-size:18px;
-    font-weight:600;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    cursor:pointer;
-    transition:.15s;
-}
-
-.counter-button:active{
-    transform:scale(.98);
-}
-
-.counter-value{
-    font-size:26px;
-    font-weight:700;
-    min-width:50px;
-    text-align:right;
-}
-
-.reset{
-    width:100%;
-    margin-top:24px;
-    padding:18px;
-    border:none;
-    border-radius:18px;
-    background:#ef4444;
-    color:#fff;
-    font-size:18px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.15s;
-}
-
-.reset:active{
-    transform:scale(.98);
-}
-
-.pink-blue{
-    background:#ffe7f2;
-    border-color:#7dc7ff;
-}
-
-.pink-white{
-    background:#ffe4ee;
-    border-color:#f5f5f5;
-}
-
-.blue-white{
-    background:#dff2ff;
-    border-color:#ffffff;
-}
-
-.orange-white{
-    background:#ffe7cc;
-    border-color:#ffffff;
-}
-
-.beige-green{
-    background:#efe4d1;
-    border-color:#8ecf95;
-}
-
-@media (max-width:480px){
-
-.counter-button{
-    font-size:17px;
-    padding:20px 18px;
-}
-
-.counter-value{
-    font-size:28px;
-}
-
-.total-value{
-    font-size:54px;
-}
-
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Счётчик · Canvas + Firestore</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b1120 0%, #1a253b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .app-card {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 56px;
+            padding: 28px 22px 34px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        h1 {
+            color: #eef5ff;
+            font-weight: 500;
+            font-size: 1.6rem;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 18px;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        h1 span {
+            background: rgba(255, 215, 0, 0.15);
+            padding: 0 14px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #ffd966;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 6px;
+        }
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #b6caf0;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 16px 6px 12px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .connection-status .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 12px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .dot.online { background: #2ecc71; box-shadow: 0 0 16px #2ecc7180; }
+        .dot.offline { background: #e74c3c; box-shadow: 0 0 16px #e74c3c80; animation: pulse 1.2s infinite; }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .badge-online {
+            background: #27ae60;
+            color: white;
+            padding: 5px 16px;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.4px;
+            box-shadow: 0 0 12px #27ae6040;
+            white-space: nowrap;
+        }
+        .canvas-wrapper {
+            background: #0a111f;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: inset 0 6px 12px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.5);
+            margin-bottom: 24px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            background: #0f182a;
+            border-radius: 32px;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+            touch-action: none;
+        }
+        .counter-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0 8px 18px 8px;
+            color: #b6caf0;
+            font-weight: 400;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .counter-status strong {
+            font-size: 1.9rem;
+            font-weight: 600;
+            color: #ffffff;
+            background: rgba(0, 20, 40, 0.5);
+            padding: 0 20px;
+            border-radius: 60px;
+            line-height: 1.4;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 22px 0 20px;
+        }
+        .btn {
+            background: #1e2b44;
+            border: none;
+            border-radius: 60px;
+            padding: 16px 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #d6e5ff;
+            box-shadow: 0 8px 0 #0b111f, 0 8px 16px rgba(0,0,0,0.5);
+            transition: all 0.06s ease;
+            cursor: pointer;
+            touch-action: manipulation;
+            text-align: center;
+            line-height: 1;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            letter-spacing: 0.5px;
+        }
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #0b111f;
+        }
+        .btn-inc { background: #1f6d4a; color: #d4ffe6; }
+        .btn-inc:active { background: #17854f; }
+        .btn-dec { background: #8f3a3a; color: #ffd6d6; }
+        .btn-dec:active { background: #b13a3a; }
+        .btn-special { background: #3d3f6b; color: #d4d9ff; }
+        .btn-special:active { background: #5a5d9c; }
+        .btn-five { background: #2d4d6b; color: #cce4ff; }
+        .btn-five:active { background: #3f6b91; }
+        .reset-area {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 8px;
+            background: rgba(0,0,0,0.25);
+            padding: 14px 18px;
+            border-radius: 80px;
+            backdrop-filter: blur(4px);
+        }
+        .reset-area input {
+            background: #0e1a2b;
+            border: 1px solid #38507a;
+            border-radius: 60px;
+            padding: 12px 20px;
+            width: 150px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+        .reset-area input::placeholder {
+            color: #5f74a0;
+            font-weight: 300;
+            letter-spacing: 0px;
+        }
+        .reset-area input:focus {
+            border-color: #7fa0e0;
+            box-shadow: 0 0 0 2px #3f6bb0;
+        }
+        .btn-reset-pin {
+            background: #b34141;
+            border: none;
+            border-radius: 60px;
+            padding: 12px 28px;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 6px 0 #631f1f;
+            transition: 0.06s linear;
+            cursor: pointer;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            border: 1px solid #ff8a8a40;
+        }
+        .btn-reset-pin:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #631f1f;
+        }
+        .footer-sync {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            font-size: 0.8rem;
+            color: #6d84b0;
+        }
+        .footer-sync .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #2ecc71;
+            display: inline-block;
+            box-shadow: 0 0 12px #2ecc7180;
+        }
+        @media (max-width: 480px) {
+            .app-card { padding: 18px 14px 26px; }
+            .button-grid { gap: 8px; }
+            .btn { font-size: 1.6rem; padding: 14px 0; }
+            .reset-area { flex-direction: column; gap: 12px; }
+            .reset-area input { width: 100%; max-width: 220px; }
+            .status-bar { flex-direction: column; gap: 8px; align-items: stretch; }
+            .connection-status { justify-content: center; }
+        }
+    </style>
 </head>
 <body>
+<div class="app-card">
+    <h1>⚡ Счётчик <span>Canvas</span></h1>
 
-<div class="container">
-
-    <div class="total">
-        <div class="total-title">Общее количество нажатий</div>
-        <div class="total-value" id="total">0</div>
+    <div class="status-bar">
+        <div class="connection-status" id="connectionStatus">
+            <span class="dot online" id="statusDot"></span>
+            <span id="statusText">Онлайн</span>
+        </div>
+        <span class="badge-online">🟢 live</span>
     </div>
 
-    <div class="buttons" id="buttons"></div>
+    <div class="canvas-wrapper">
+        <canvas id="counterCanvas" width="400" height="400"></canvas>
+    </div>
 
-    <button class="reset" id="resetButton">
-        Сбросить всё
-    </button>
+    <div class="counter-status">
+        <span>📊 Общее значение</span>
+        <strong id="counterDisplay">0</strong>
+    </div>
 
+    <div class="button-grid">
+        <button class="btn btn-inc" data-delta="1">+1</button>
+        <button class="btn btn-inc btn-five" data-delta="5">+5</button>
+        <button class="btn btn-dec" data-delta="-1">−1</button>
+        <button class="btn btn-dec btn-special" data-delta="-5">−5</button>
+    </div>
+
+    <div class="reset-area">
+        <input type="password" id="pinInput" placeholder="PIN" maxlength="6" inputmode="numeric">
+        <button class="btn-reset-pin" id="resetHardBtn">🔐 Сброс (PIN)</button>
+    </div>
+    <div class="footer-sync">
+        <span class="dot"></span> синхронизация Firestore · onSnapshot
+    </div>
 </div>
-
 <script>
+    (function() {
+        // ---------- FIREBASE ----------
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2du1x0P6Nyx4SjvDu2eW-eJOGssNxO2Q",
+            authDomain: "rostik-bb804.firebaseapp.com",
+            projectId: "rostik-bb804",
+            storageBucket: "rostik-bb804.firebasestorage.app",
+            messagingSenderId: "407814171203",
+            appId: "1:407814171203:web:98ddabe482615f843e42f6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-const items = [
-{
-name:"Розово-голубой",
-class:"pink-blue"
-},
-{
-name:"Розово-белый",
-class:"pink-white"
-},
-{
-name:"Сине-белый",
-class:"blue-white"
-},
-{
-name:"Оранжево-белый",
-class:"orange-white"
-},
-{
-name:"Бежево-зеленый",
-class:"beige-green"
-}
-];
+        const COUNTER_DOC = 'counters/counterMain';
 
-let counters = JSON.parse(localStorage.getItem("clickCounters"));
+        // ---------- CANVAS ----------
+        const canvas = document.getElementById('counterCanvas');
+        const ctx = canvas.getContext('2d');
+        const displayEl = document.getElementById('counterDisplay');
 
-if(!Array.isArray(counters) || counters.length!==items.length){
-    counters = new Array(items.length).fill(0);
-}
+        let currentValue = 0;
 
-const buttonsContainer = document.getElementById("buttons");
+        // ---------- СТАТУС СОЕДИНЕНИЯ ----------
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
 
-items.forEach((item,index)=>{
+        function updateConnectionStatus(isOnline) {
+            if (isOnline) {
+                statusDot.className = 'dot online';
+                statusText.textContent = 'Онлайн';
+            } else {
+                statusDot.className = 'dot offline';
+                statusText.textContent = 'Нет подключения';
+            }
+        }
 
-    const button=document.createElement("button");
-    button.className=`counter-button ${item.class}`;
+        window.addEventListener('online', () => {
+            updateConnectionStatus(true);
+        });
+        window.addEventListener('offline', () => {
+            updateConnectionStatus(false);
+        });
+        // Начальное состояние
+        updateConnectionStatus(navigator.onLine);
 
-    button.innerHTML=`
-        <span>${item.name}</span>
-        <span class="counter-value" id="count-${index}">${counters[index]}</span>
-    `;
+        // ---------- ОТРИСОВКА CANVAS ----------
+        function drawCanvas(value) {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
 
-    button.addEventListener("click",()=>{
+            const grad = ctx.createRadialGradient(w*0.5, h*0.5, 20, w*0.5, h*0.5, w*0.7);
+            grad.addColorStop(0, '#223a5e');
+            grad.addColorStop(1, '#0f182a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
 
-        counters[index]++;
+            ctx.strokeStyle = '#3a5a8a30';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const r1 = w * 0.3;
+                const r2 = w * 0.44;
+                const x1 = w/2 + Math.cos(angle) * r1;
+                const y1 = h/2 + Math.sin(angle) * r1;
+                const x2 = w/2 + Math.cos(angle) * r2;
+                const y2 = h/2 + Math.sin(angle) * r2;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
 
-        save();
-        update();
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, w*0.28, 0, Math.PI*2);
+            ctx.fillStyle = '#101c30';
+            ctx.shadowColor = '#7aa0e060';
+            ctx.shadowBlur = 32;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#6c93d040';
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
-    });
+            const number = Number(value);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#00000080';
+            ctx.shadowBlur = 16;
 
-    buttonsContainer.appendChild(button);
+            ctx.font = `600 ${w * 0.22}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillStyle = '#ecf5ff';
+            ctx.fillText(number, w/2, h/2 - 6);
 
-});
+            ctx.shadowBlur = 0;
+            ctx.font = `600 ${w * 0.22}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillStyle = '#b0ccff20';
+            ctx.fillText(number, w/2 + 2, h/2 - 4);
 
-function save(){
-    localStorage.setItem("clickCounters",JSON.stringify(counters));
-}
+            ctx.font = `400 ${w * 0.045}px monospace`;
+            ctx.fillStyle = '#8aa9dd';
+            ctx.fillText('● live', w/2, h - 30);
+        }
 
-function update(){
+        // ---------- ОБНОВЛЕНИЕ UI ----------
+        function updateUI(value) {
+            const num = Number(value) || 0;
+            currentValue = num;
+            displayEl.textContent = num;
+            drawCanvas(num);
+        }
 
-    counters.forEach((value,index)=>{
-        document.getElementById(`count-${index}`).textContent=value;
-    });
+        // ---------- FIRESTORE: ИНКРЕМЕНТ ----------
+        function sendDelta(delta) {
+            if (delta === 0) return;
+            if (!navigator.onLine) {
+                alert('⚠️ Нет подключения к интернету. Попробуйте позже.');
+                return;
+            }
+            const docRef = db.doc(COUNTER_DOC);
+            docRef.update({
+                count: firebase.firestore.FieldValue.increment(delta)
+            }).catch((err) => {
+                if (err.code === 'not-found') {
+                    docRef.set({ count: delta }).catch(console.warn);
+                } else {
+                    console.warn('Ошибка increment:', err);
+                }
+            });
+        }
 
-    const total=counters.reduce((sum,value)=>sum+value,0);
+        // ---------- СБРОС (установка значения) ----------
+        function resetCounterTo(value) {
+            if (!navigator.onLine) {
+                alert('⚠️ Нет подключения к интернету. Сброс невозможен.');
+                return;
+            }
+            const docRef = db.doc(COUNTER_DOC);
+            docRef.set({ count: value })
+                .catch((err) => console.warn('Ошибка set (reset):', err));
+        }
 
-    document.getElementById("total").textContent=total;
+        // ---------- ПОДПИСКА onSnapshot ----------
+        function startFirestoreListener() {
+            const docRef = db.doc(COUNTER_DOC);
+            docRef.onSnapshot({
+                includeMetadataChanges: false
+            }, (snapshot) => {
+                if (snapshot.exists) {
+                    const data = snapshot.data();
+                    if (data && typeof data.count === 'number') {
+                        updateUI(data.count);
+                    } else {
+                        resetCounterTo(0);
+                    }
+                } else {
+                    docRef.set({ count: 0 })
+                        .then(() => { updateUI(0); })
+                        .catch(console.warn);
+                }
+            }, (error) => {
+                console.error('Ошибка onSnapshot:', error);
+            });
+        }
 
-}
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+        function init() {
+            const docRef = db.doc(COUNTER_DOC);
+            docRef.get()
+                .then((snap) => {
+                    if (snap.exists) {
+                        const val = snap.data()?.count;
+                        if (typeof val === 'number') updateUI(val);
+                        else updateUI(0);
+                    } else {
+                        updateUI(0);
+                    }
+                })
+                .catch(() => { updateUI(0); });
 
-document.getElementById("resetButton").addEventListener("click",()=>{
+            startFirestoreListener();
 
-    if(confirm("Сбросить все счётчики?")){
+            // ---------- КНОПКИ ИНКРЕМЕНТА ----------
+            document.querySelectorAll('.btn[data-delta]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const delta = parseInt(btn.dataset.delta, 10);
+                    if (!isNaN(delta) && delta !== 0) {
+                        sendDelta(delta);
+                    }
+                });
+            });
 
-        counters=new Array(items.length).fill(0);
+            // ---------- СБРОС ПО PIN ----------
+            const resetHardBtn = document.getElementById('resetHardBtn');
+            const pinInput = document.getElementById('pinInput');
+            resetHardBtn.addEventListener('click', () => {
+                const pin = pinInput.value.trim();
+                if (pin === '2026') {
+                    resetCounterTo(0);
+                    pinInput.value = '';
+                    pinInput.blur();
+                } else {
+                    alert('❌ Неверный PIN-код');
+                    pinInput.value = '';
+                    pinInput.focus();
+                }
+            });
 
-        save();
-        update();
+            pinInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    resetHardBtn.click();
+                }
+            });
+        }
 
-    }
-
-});
-
-update();
-
+        // ---------- ЗАПУСК ----------
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            init();
+        } else {
+            alert('Firebase не загружен. Проверьте подключение.');
+        }
+    })();
 </script>
-
 </body>
 </html>
